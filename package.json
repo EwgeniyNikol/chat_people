@@ -1,0 +1,36 @@
+{
+  "name": "chat_people",
+  "version": "1.0.0",
+  "description": "Чат с веб-сокетами",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EwgeniyNikol/chat_people.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EwgeniyNikol/chat_people/issues"
+  },
+  "homepage": "https://github.com/EwgeniyNikol/chat_people#readme",
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.5",
+    "babel-loader": "^10.1.1",
+    "css-loader": "^7.1.4",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.6.7",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.106.2",
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.2.4"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  }
+}
