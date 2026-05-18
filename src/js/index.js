@@ -5,7 +5,7 @@ import WebSocketClient from './modules/WebSocketClient.js';
 import MessageRenderer from './modules/MessageRenderer.js';
 import UserList from './modules/UserList.js';
 
-const WS_URL = 'wss://YOUR-RENDER-URL.onrender.com'; // Замените позже на реальный URL
+const WS_URL = 'wss://chat-people-backend-viyo.onrender.com';
 
 class App {
   constructor() {
@@ -34,7 +34,7 @@ class App {
 
   async registerUser(nickname, modal) {
     try {
-      const response = await fetch('https://YOUR-RENDER-URL.onrender.com/new-user', {
+      const response = await fetch('https://chat-people-backend-viyo.onrender.com/new-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nickname })
