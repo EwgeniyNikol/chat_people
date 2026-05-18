@@ -4,19 +4,25 @@ export default class Modal {
     this.input = null;
     this.button = null;
     this.errorDiv = null;
+    this.resolvePromise = null;
   }
 
   show() {
     return new Promise((resolve) => {
-      this.createModal();
+      this.resolvePromise = resolve;
+      if (!this.modal) {
+        this.createModal();
+      } else {
+        this.modal.style.display = 'flex';
+        this.input.value = '';
+        this.clearError();
+      }
       this.button.onclick = async () => {
         const nickname = this.input.value.trim();
         if (!nickname) {
           this.showError('Пожалуйста, введите никнейм');
           return;
         }
-        
-        this.clearError();
         
         try {
           const response = await fetch('https://chat-people-backend-viyo.onrender.com/new-user', {
