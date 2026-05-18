@@ -18,52 +18,54 @@ class App {
 
   async init() {
     const modal = new Modal();
-
+    
     while (!this.currentUser) {
       const nickname = await modal.show();
-      const result = await this.registerUser(nickname, modal);
-      if (result && result.status === 'ok') {
+      const result = await this.registerUser(nickname);
+      
+      if (result.success) {
         this.currentUser = result.user;
         modal.close();
-      } else if (result && result.status === 'error') {
-        modal.showError(result.message);
       } else {
-        modal.showError('Ошибка сервера. Попробуйте позже.');
+        modal.showError(result.message);
       }
     }
-
+    
     await this.initWebSocket();
     this.renderUI();
   }
 
-  async registerUser(nickname, modal) {
+  async registerUser(nickname) {
     try {
       const response = await fetch('https://chat-people-backend-viyo.onrender.com/new-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nickname })
       });
-
+      
       const data = await response.json();
-
-      if (response.status === 409) {
+      
+      if (response.status === 409 || data.status === 'error') {
         return {
-          status: 'error',
+          success: false,
           message: 'Этот никнейм уже занят! Пожалуйста, введите другой.'
         };
       }
-
+      
       if (data.status === 'ok') {
-        return { status: 'ok', user: data.user };
+        return {
+          success: true,
+          user: data.user
+        };
       }
-
+      
       return {
-        status: 'error',
+        success: false,
         message: 'Ошибка сервера'
       };
     } catch (error) {
       return {
-        status: 'error',
+        success: false,
         message: 'Ошибка соединения с сервером'
       };
     }
@@ -72,11 +74,11 @@ class App {
   async initWebSocket() {
     this.wsClient = new WebSocketClient(WS_URL);
     await this.wsClient.connect();
-
+    
     this.wsClient.onMessage = (data) => {
       this.messageRenderer.renderMessage(data);
     };
-
+    
     this.wsClient.onUserList = (users) => {
       this.userList.render(users);
     };
@@ -85,25 +87,25 @@ class App {
   renderUI() {
     const appDiv = document.getElementById('app');
     appDiv.innerHTML = '';
-
+    
     const mainContainer = document.createElement('div');
     mainContainer.className = 'main-container';
-
+    
     const sidebar = document.createElement('div');
     sidebar.className = 'sidebar';
     sidebar.id = 'user-list';
-
+    
     const chatArea = document.createElement('div');
     chatArea.className = 'chat-area';
     chatArea.id = 'chat-area';
-
+    
     mainContainer.append(sidebar, chatArea);
     appDiv.append(mainContainer);
-
+    
     this.userList = new UserList('user-list');
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
     this.chat = new Chat('chat-area', this.currentUser, this.wsClient);
-
+    
     this.chat.render();
     this.messageRenderer.container = this.chat.getMessagesContainer();
   }

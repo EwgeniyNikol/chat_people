@@ -3,35 +3,44 @@ export default class Modal {
     this.modal = null;
     this.input = null;
     this.button = null;
-    this.resolvePromise = null;
   }
 
   show() {
     return new Promise((resolve) => {
-      this.resolvePromise = resolve;
       this.createModal();
       this.button.onclick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.resolvePromise(nickname);
-          this.clearError();
-          this.input.value = '';
+          this.modal.remove();
+          resolve(nickname);
         }
       };
     });
   }
 
-  clearError() {
-    const existingError = this.modal.querySelector('.error-message');
-    if (existingError) existingError.remove();
-  }
-
   createModal() {
     this.modal = document.createElement('div');
-    this.modal.className = 'modal-overlay';
+    this.modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    `;
     
     const container = document.createElement('div');
-    container.className = 'modal-container';
+    container.style.cssText = `
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      text-align: center;
+      min-width: 300px;
+    `;
     
     const title = document.createElement('h2');
     title.textContent = 'Выберите псевдоним';
@@ -39,9 +48,23 @@ export default class Modal {
     this.input = document.createElement('input');
     this.input.type = 'text';
     this.input.placeholder = 'Введите никнейм';
+    this.input.style.cssText = `
+      width: 100%;
+      padding: 8px;
+      margin: 15px 0;
+      box-sizing: border-box;
+    `;
     
     this.button = document.createElement('button');
     this.button.textContent = 'Продолжить';
+    this.button.style.cssText = `
+      padding: 8px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    `;
     
     container.append(title, this.input, this.button);
     this.modal.append(container);
@@ -50,17 +73,19 @@ export default class Modal {
   }
 
   showError(message) {
-    this.clearError();
-    const errorDiv = document.createElement('div');
+    let errorDiv = this.modal.querySelector('.error-message');
+    if (!errorDiv) {
+      errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.style.cssText = 'color: red; font-size: 12px; margin-top: 10px;';
+      this.modal.querySelector('div').append(errorDiv);
+    }
     errorDiv.textContent = message;
-    errorDiv.className = 'error-message';
-    this.modal.querySelector('.modal-container').append(errorDiv);
   }
 
   close() {
     if (this.modal) {
       this.modal.remove();
-      this.modal = null;
     }
   }
 }
