@@ -18,9 +18,10 @@ class App {
 
   async init() {
     const modal = new Modal();
+    let nickname = null;
     
     while (!this.currentUser) {
-      const nickname = await modal.show();
+      nickname = await modal.show();
       const result = await this.registerUser(nickname);
       
       if (result.success) {

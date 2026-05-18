@@ -3,19 +3,27 @@ export default class Modal {
     this.modal = null;
     this.input = null;
     this.button = null;
+    this.resolvePromise = null;
   }
 
   show() {
     return new Promise((resolve) => {
+      this.resolvePromise = resolve;
       this.createModal();
       this.button.onclick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.modal.remove();
-          resolve(nickname);
+          this.resolvePromise(nickname);
+          this.clearError();
+          this.input.value = '';
         }
       };
     });
+  }
+
+  clearError() {
+    const existingError = this.modal.querySelector('.error-message');
+    if (existingError) existingError.remove();
   }
 
   createModal() {
@@ -42,21 +50,20 @@ export default class Modal {
   }
 
   showError(message) {
-    let errorDiv = this.modal.querySelector('.error-message');
-    if (!errorDiv) {
-      errorDiv = document.createElement('div');
-      errorDiv.className = 'error-message';
-      const container = this.modal.querySelector('.modal-container');
-      if (container) {
-        container.append(errorDiv);
-      }
-    }
+    this.clearError();
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
     errorDiv.textContent = message;
+    const container = this.modal.querySelector('.modal-container');
+    if (container) {
+      container.append(errorDiv);
+    }
   }
 
   close() {
     if (this.modal) {
       this.modal.remove();
+      this.modal = null;
     }
   }
 }
