@@ -45,12 +45,12 @@ class App {
       if (data.status === 'ok') {
         return data.user;
       } else {
-        modal.showError('Этот никнейм уже занят!');
+        modal.showError('Этот никнейм уже занят! Пожалуйста, введите другой.');
         return null;
       }
     } catch (error) {
       console.error('Ошибка регистрации:', error);
-      modal.showError('Ошибка сервера');
+      modal.showError('Ошибка сервера. Попробуйте позже.');
       return null;
     }
   }
