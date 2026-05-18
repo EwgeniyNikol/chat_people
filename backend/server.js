@@ -18,16 +18,16 @@ app.use((req, res, next) => {
 });
 
 const userState = [];
+
 app.post("/new-user", async (request, response) => {
   const { name } = request.body;
   const isExist = userState.find((user) => user.name === name);
-  if (!isExist) {
-    const newUser = { id: randomUUID(), name };
-    userState.push(newUser);
-    response.send(JSON.stringify({ status: "ok", user: newUser })).end();
-  } else {
-    response.status(409).send(JSON.stringify({ status: "error", message: "This name is already taken!" })).end();
+  if (isExist) {
+    return response.status(409).send(JSON.stringify({ status: "error", message: "This name is already taken!" }));
   }
+  const newUser = { id: randomUUID(), name };
+  userState.push(newUser);
+  response.send(JSON.stringify({ status: "ok", user: newUser }));
 });
 
 const server = http.createServer(app);
@@ -63,7 +63,7 @@ wsServer.on("connection", (ws) => {
     }
   });
 
-  [...wsServer.clients].forEach((o) => o.send(JSON.stringify(userState)));
+  ws.send(JSON.stringify(userState));
 });
 
 const port = process.env.PORT || 3000;
