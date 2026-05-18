@@ -11,13 +11,7 @@ const app = express();
 const logger = pino(pinoPretty());
 
 app.use(cors());
-app.use(
-  bodyParser.json({
-    type(req) {
-      return true;
-    },
-  })
-);
+app.use(bodyParser.json({ type(req) { return true; } }));
 app.use((req, res, next) => {
   res.setHeader("Content-Type", "application/json");
   next();
@@ -25,101 +19,52 @@ app.use((req, res, next) => {
 
 const userState = [];
 app.post("/new-user", async (request, response) => {
-  if (Object.keys(request.body).length === 0) {
-    const result = {
-      status: "error",
-      message: "This name is already taken!",
-    };
-    response.status(400).send(JSON.stringify(result)).end();
-    return;
-  }
   const { name } = request.body;
   const isExist = userState.find((user) => user.name === name);
   if (!isExist) {
-    const newUser = {
-      id: randomUUID(),
-      name: name,
-    };
+    const newUser = { id: randomUUID(), name };
     userState.push(newUser);
-    const result = {
-      status: "ok",
-      user: newUser,
-    };
-    logger.info(`New user created: ${JSON.stringify(newUser)}`);
-    response.send(JSON.stringify(result)).end();
+    response.send(JSON.stringify({ status: "ok", user: newUser })).end();
   } else {
-    const result = {
-      status: "error",
-      message: "This name is already taken!",
-    };
-    logger.error(`User with name "${name}" already exist`);
-    response.status(409).send(JSON.stringify(result)).end();
+    response.status(409).send(JSON.stringify({ status: "error", message: "This name is already taken!" })).end();
   }
 });
 
 const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
+
 wsServer.on("connection", (ws) => {
   let currentUser = null;
 
   ws.on("message", (msg, isBinary) => {
     const receivedMSG = JSON.parse(msg);
-    logger.info(`Message received: ${JSON.stringify(receivedMSG)}`);
-    
     if (receivedMSG.user && !currentUser) {
       currentUser = receivedMSG.user;
     }
-    
     if (receivedMSG.type === "exit") {
-      const idx = userState.findIndex(
-        (user) => user.name === receivedMSG.user.name
-      );
-      if (idx !== -1) {
-        userState.splice(idx, 1);
-      }
-      [...wsServer.clients]
-        .filter((o) => o.readyState === WebSocket.OPEN)
-        .forEach((o) => o.send(JSON.stringify(userState)));
-      logger.info(`User with name "${receivedMSG.user.name}" has been deleted`);
+      const idx = userState.findIndex((user) => user.id === currentUser?.id);
+      if (idx !== -1) userState.splice(idx, 1);
+      [...wsServer.clients].forEach((o) => o.send(JSON.stringify(userState)));
       return;
     }
-    
     if (receivedMSG.type === "send") {
-      [...wsServer.clients]
-        .filter((o) => o.readyState === WebSocket.OPEN)
-        .forEach((o) => o.send(msg, { binary: isBinary }));
-      logger.info("Message sent to all users");
+      [...wsServer.clients].forEach((o) => o.send(msg, { binary: isBinary }));
     }
   });
-  
+
   ws.on("close", () => {
     if (currentUser) {
       const idx = userState.findIndex((user) => user.id === currentUser.id);
       if (idx !== -1) {
         userState.splice(idx, 1);
-        [...wsServer.clients]
-          .filter((o) => o.readyState === WebSocket.OPEN)
-          .forEach((o) => o.send(JSON.stringify(userState)));
-        logger.info(`User "${currentUser.name}" disconnected and removed`);
+        [...wsServer.clients].forEach((o) => o.send(JSON.stringify(userState)));
+        logger.info(`User "${currentUser.name}" disconnected`);
       }
     }
   });
-  
-  [...wsServer.clients]
-    .filter((o) => o.readyState === WebSocket.OPEN)
-    .forEach((o) => o.send(JSON.stringify(userState)));
+
+  ws.send(JSON.stringify(userState));
 });
 
 const port = process.env.PORT || 3000;
-
-const bootstrap = async () => {
-  try {
-    server.listen(port, () =>
-      logger.info(`Server has been started on http://localhost:${port}`)
-    );
-  } catch (error) {
-    logger.error(`Error: ${error.message}`);
-  }
-};
-
-bootstrap();
+server.listen(port, () => logger.info(`Server started on port ${port}`));
