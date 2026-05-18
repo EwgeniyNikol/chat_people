@@ -19,7 +19,6 @@ body {
     height: 100%;
 }
 
-/* Модальное окно */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -73,7 +72,6 @@ body {
     margin-top: 10px;
 }
 
-/* Основной контейнер - занимает всю высоту */
 .main-container {
     display: flex;
     height: 100%;
@@ -83,7 +81,6 @@ body {
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-/* Боковая панель */
 .sidebar {
     width: 250px;
     background: #f5f5f5;
@@ -110,7 +107,6 @@ body {
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* Область чата - занимает всю высоту */
 .chat-area {
     flex: 1;
     display: flex;
@@ -126,7 +122,6 @@ body {
     height: 100%;
 }
 
-/* Область сообщений - растягивается и скроллится */
 .messages-area {
     flex: 1;
     overflow-y: auto;
@@ -136,7 +131,6 @@ body {
     gap: 15px;
 }
 
-/* Сообщения */
 .message {
     display: flex;
     max-width: 70%;
@@ -185,7 +179,6 @@ body {
     word-wrap: break-word;
 }
 
-/* Область ввода - фиксируется внизу */
 .input-area {
     display: flex;
     padding: 15px;
@@ -222,7 +215,6 @@ body {
     background: #0056b3;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
     .sidebar {
         width: 200px;
