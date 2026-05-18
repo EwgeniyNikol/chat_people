@@ -207,3 +207,34 @@ body {
 .send-button:hover {
     background: #0056b3;
 }
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  .message {
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .message {
+    max-width: 90%;
+  }
+  .message-name, .message-text {
+    font-size: 12px;
+  }
+  .chat-input, .send-button {
+    font-size: 12px;
+  }
+}
