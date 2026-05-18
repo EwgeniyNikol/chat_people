@@ -18,16 +18,23 @@ class App {
 
   async init() {
     const modal = new Modal();
-    
+
     while (!this.currentUser) {
       const nickname = await modal.show();
-      const isRegistered = await this.registerUser(nickname, modal);
-      if (isRegistered) {
-        this.currentUser = isRegistered;
+      const result = await this.registerUser(nickname, modal);
+      if (result && result.status === 'ok') {
+        this.currentUser = result.user;
         modal.close();
       }
+      
+      else if (result && result.status === 'error') {
+        modal.showError(result.message);
+      }
+      else {
+        modal.showError('Ошибка сервера. Попробуйте позже.');
+      }
     }
-    
+
     await this.initWebSocket();
     this.renderUI();
   }
@@ -39,31 +46,42 @@ class App {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nickname })
       });
-      
+
       const data = await response.json();
-      
-      if (data.status === 'ok') {
-        return data.user;
-      } else {
-        modal.showError('Этот никнейм уже занят! Пожалуйста, введите другой.');
-        return null;
+
+      if (response.status === 409 || data.status === 'error') {
+        return {
+          status: 'error',
+          message: data.message || 'Этот никнейм уже занят! Пожалуйста, введите другой.'
+        };
       }
+
+      if (data.status === 'ok') {
+        return { status: 'ok', user: data.user };
+      }
+
+      return {
+        status: 'error',
+        message: 'Неизвестная ошибка. Попробуйте другой ник.'
+      };
+
     } catch (error) {
-      console.error('Ошибка регистрации:', error);
-      modal.showError('Ошибка сервера. Попробуйте позже.');
-      return null;
+      console.error('Ошибка сети или сервера:', error);
+      return {
+        status: 'error',
+        message: 'Ошибка соединения с сервером. Проверьте интернет.'
+      };
     }
   }
 
   async initWebSocket() {
     this.wsClient = new WebSocketClient(WS_URL);
-    
     await this.wsClient.connect();
-    
+
     this.wsClient.onMessage = (data) => {
       this.messageRenderer.renderMessage(data);
     };
-    
+
     this.wsClient.onUserList = (users) => {
       this.userList.render(users);
     };
@@ -72,28 +90,26 @@ class App {
   renderUI() {
     const appDiv = document.getElementById('app');
     appDiv.innerHTML = '';
-    
+
     const mainContainer = document.createElement('div');
     mainContainer.className = 'main-container';
-    
+
     const sidebar = document.createElement('div');
     sidebar.className = 'sidebar';
     sidebar.id = 'user-list';
-    
+
     const chatArea = document.createElement('div');
     chatArea.className = 'chat-area';
     chatArea.id = 'chat-area';
-    
+
     mainContainer.append(sidebar, chatArea);
     appDiv.append(mainContainer);
-    
+
     this.userList = new UserList('user-list');
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
     this.chat = new Chat('chat-area', this.currentUser, this.wsClient);
-    
+
     this.chat.render();
-    
-    const originalGetMessagesContainer = this.chat.getMessagesContainer;
     this.messageRenderer.container = this.chat.getMessagesContainer();
   }
 }
