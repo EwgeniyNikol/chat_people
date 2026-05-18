@@ -31,6 +31,7 @@ app.post("/new-user", async (request, response) => {
       message: "This name is already taken!",
     };
     response.status(400).send(JSON.stringify(result)).end();
+    return;
   }
   const { name } = request.body;
   const isExist = userState.find((user) => user.name === name);
@@ -59,20 +60,30 @@ app.post("/new-user", async (request, response) => {
 const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
 wsServer.on("connection", (ws) => {
+  let currentUser = null;
+
   ws.on("message", (msg, isBinary) => {
     const receivedMSG = JSON.parse(msg);
     logger.info(`Message received: ${JSON.stringify(receivedMSG)}`);
+    
+    if (receivedMSG.user && !currentUser) {
+      currentUser = receivedMSG.user;
+    }
+    
     if (receivedMSG.type === "exit") {
       const idx = userState.findIndex(
         (user) => user.name === receivedMSG.user.name
       );
-      userState.splice(idx, 1);
+      if (idx !== -1) {
+        userState.splice(idx, 1);
+      }
       [...wsServer.clients]
         .filter((o) => o.readyState === WebSocket.OPEN)
         .forEach((o) => o.send(JSON.stringify(userState)));
       logger.info(`User with name "${receivedMSG.user.name}" has been deleted`);
       return;
     }
+    
     if (receivedMSG.type === "send") {
       [...wsServer.clients]
         .filter((o) => o.readyState === WebSocket.OPEN)
@@ -80,6 +91,20 @@ wsServer.on("connection", (ws) => {
       logger.info("Message sent to all users");
     }
   });
+  
+  ws.on("close", () => {
+    if (currentUser) {
+      const idx = userState.findIndex((user) => user.id === currentUser.id);
+      if (idx !== -1) {
+        userState.splice(idx, 1);
+        [...wsServer.clients]
+          .filter((o) => o.readyState === WebSocket.OPEN)
+          .forEach((o) => o.send(JSON.stringify(userState)));
+        logger.info(`User "${currentUser.name}" disconnected and removed`);
+      }
+    }
+  });
+  
   [...wsServer.clients]
     .filter((o) => o.readyState === WebSocket.OPEN)
     .forEach((o) => o.send(JSON.stringify(userState)));
