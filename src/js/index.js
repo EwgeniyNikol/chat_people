@@ -101,6 +101,12 @@ class App {
 const app = new App();
 app.init();
 
+window.addEventListener('pagehide', () => {
+  if (app.wsClient && app.currentUser) {
+    app.wsClient.exit(app.currentUser);
+  }
+});
+
 window.addEventListener('beforeunload', () => {
   if (app.wsClient && app.currentUser) {
     app.wsClient.exit(app.currentUser);
