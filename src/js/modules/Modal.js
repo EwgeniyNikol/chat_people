@@ -41,6 +41,7 @@ export default class Modal {
       text-align: center;
       min-width: 300px;
     `;
+    container.className = 'modal-container';
     
     const title = document.createElement('h2');
     title.textContent = 'Выберите псевдоним';
@@ -78,7 +79,10 @@ export default class Modal {
       errorDiv = document.createElement('div');
       errorDiv.className = 'error-message';
       errorDiv.style.cssText = 'color: red; font-size: 12px; margin-top: 10px;';
-      this.modal.querySelector('div').append(errorDiv);
+      const container = this.modal.querySelector('.modal-container');
+      if (container) {
+        container.append(errorDiv);
+      }
     }
     errorDiv.textContent = message;
   }
