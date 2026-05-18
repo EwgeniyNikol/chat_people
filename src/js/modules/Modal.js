@@ -3,27 +3,29 @@ export default class Modal {
     this.modal = null;
     this.input = null;
     this.button = null;
-    this.resolvePromise = null;
+    this.errorDiv = null;
   }
 
   show() {
     return new Promise((resolve) => {
-      this.resolvePromise = resolve;
       this.createModal();
       this.button.onclick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.resolvePromise(nickname);
           this.clearError();
-          this.input.value = '';
+          resolve(nickname);
+        } else {
+          this.showError('Пожалуйста, введите никнейм');
         }
       };
     });
   }
 
   clearError() {
-    const existingError = this.modal.querySelector('.error-message');
-    if (existingError) existingError.remove();
+    if (this.errorDiv) {
+      this.errorDiv.remove();
+      this.errorDiv = null;
+    }
   }
 
   createModal() {
@@ -43,6 +45,13 @@ export default class Modal {
     this.button = document.createElement('button');
     this.button.textContent = 'Продолжить';
     
+    this.input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.button.click();
+      }
+    });
+    
     container.append(title, this.input, this.button);
     this.modal.append(container);
     document.body.append(this.modal);
@@ -51,12 +60,13 @@ export default class Modal {
 
   showError(message) {
     this.clearError();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
+    this.errorDiv = document.createElement('div');
+    this.errorDiv.className = 'error-message';
+    this.errorDiv.textContent = message;
+    this.errorDiv.style.cssText = 'color: red; font-size: 12px; margin-top: 10px;';
     const container = this.modal.querySelector('.modal-container');
     if (container) {
-      container.append(errorDiv);
+      container.append(this.errorDiv);
     }
   }
 
