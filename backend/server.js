@@ -63,7 +63,7 @@ wsServer.on("connection", (ws) => {
     }
   });
 
-  ws.send(JSON.stringify(userState));
+  [...wsServer.clients].forEach((o) => o.send(JSON.stringify(userState)));
 });
 
 const port = process.env.PORT || 3000;
