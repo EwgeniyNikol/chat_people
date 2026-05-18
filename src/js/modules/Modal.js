@@ -3,19 +3,27 @@ export default class Modal {
     this.modal = null;
     this.input = null;
     this.button = null;
+    this.resolvePromise = null;
   }
 
   show() {
     return new Promise((resolve) => {
+      this.resolvePromise = resolve;
       this.createModal();
       this.button.onclick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.modal.remove();
-          resolve(nickname);
+          this.resolvePromise(nickname);
+          this.clearError();
+          this.input.value = '';
         }
       };
     });
+  }
+
+  clearError() {
+    const existingError = this.modal.querySelector('.error-message');
+    if (existingError) existingError.remove();
   }
 
   createModal() {
@@ -42,16 +50,17 @@ export default class Modal {
   }
 
   showError(message) {
+    this.clearError();
     const errorDiv = document.createElement('div');
     errorDiv.textContent = message;
     errorDiv.className = 'error-message';
     this.modal.querySelector('.modal-container').append(errorDiv);
-    setTimeout(() => errorDiv.remove(), 2000);
   }
 
   close() {
     if (this.modal) {
       this.modal.remove();
+      this.modal = null;
     }
   }
 }
