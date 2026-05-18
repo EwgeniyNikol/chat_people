@@ -4,28 +4,29 @@ export default class Modal {
     this.input = null;
     this.button = null;
     this.errorDiv = null;
+    this.resolvePromise = null;
   }
 
   show() {
     return new Promise((resolve) => {
-      this.createModal();
+      this.resolvePromise = resolve;
+      if (!this.modal) {
+        this.createModal();
+      } else {
+        this.modal.style.display = 'flex';
+        this.input.value = '';
+        if (this.errorDiv) this.errorDiv.textContent = '';
+      }
       this.button.onclick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.clearError();
+          if (this.errorDiv) this.errorDiv.textContent = '';
           resolve(nickname);
         } else {
           this.showError('Пожалуйста, введите никнейм');
         }
       };
     });
-  }
-
-  clearError() {
-    if (this.errorDiv) {
-      this.errorDiv.remove();
-      this.errorDiv = null;
-    }
   }
 
   createModal() {
@@ -45,6 +46,10 @@ export default class Modal {
     this.button = document.createElement('button');
     this.button.textContent = 'Продолжить';
     
+    this.errorDiv = document.createElement('div');
+    this.errorDiv.className = 'error-message';
+    this.errorDiv.style.cssText = 'color: red; font-size: 12px; margin-top: 10px;';
+    
     this.input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -52,28 +57,21 @@ export default class Modal {
       }
     });
     
-    container.append(title, this.input, this.button);
+    container.append(title, this.input, this.button, this.errorDiv);
     this.modal.append(container);
     document.body.append(this.modal);
     this.input.focus();
   }
 
   showError(message) {
-    this.clearError();
-    this.errorDiv = document.createElement('div');
-    this.errorDiv.className = 'error-message';
-    this.errorDiv.textContent = message;
-    this.errorDiv.style.cssText = 'color: red; font-size: 12px; margin-top: 10px;';
-    const container = this.modal.querySelector('.modal-container');
-    if (container) {
-      container.append(this.errorDiv);
+    if (this.errorDiv) {
+      this.errorDiv.textContent = message;
     }
   }
 
   close() {
     if (this.modal) {
-      this.modal.remove();
-      this.modal = null;
+      this.modal.style.display = 'none';
     }
   }
 }
