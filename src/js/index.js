@@ -25,12 +25,9 @@ class App {
       if (result && result.status === 'ok') {
         this.currentUser = result.user;
         modal.close();
-      }
-      
-      else if (result && result.status === 'error') {
+      } else if (result && result.status === 'error') {
         modal.showError(result.message);
-      }
-      else {
+      } else {
         modal.showError('Ошибка сервера. Попробуйте позже.');
       }
     }
@@ -49,10 +46,10 @@ class App {
 
       const data = await response.json();
 
-      if (response.status === 409 || data.status === 'error') {
+      if (response.status === 409) {
         return {
           status: 'error',
-          message: data.message || 'Этот никнейм уже занят! Пожалуйста, введите другой.'
+          message: 'Этот никнейм уже занят! Пожалуйста, введите другой.'
         };
       }
 
@@ -62,14 +59,12 @@ class App {
 
       return {
         status: 'error',
-        message: 'Неизвестная ошибка. Попробуйте другой ник.'
+        message: 'Ошибка сервера'
       };
-
     } catch (error) {
-      console.error('Ошибка сети или сервера:', error);
       return {
         status: 'error',
-        message: 'Ошибка соединения с сервером. Проверьте интернет.'
+        message: 'Ошибка соединения с сервером'
       };
     }
   }
