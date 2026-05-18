@@ -4,9 +4,19 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #f0f0f0;
+    height: 100%;
+    overflow: hidden;
+}
+
+#app {
+    height: 100%;
 }
 
 /* Модальное окно */
@@ -63,17 +73,17 @@ body {
     margin-top: 10px;
 }
 
-/* Основной контейнер */
+/* Основной контейнер - занимает всю высоту */
 .main-container {
     display: flex;
-    height: 100vh;
+    height: 100%;
     max-width: 1200px;
     margin: 0 auto;
     background: #fff;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-/* Боковая панель (список пользователей) */
+/* Боковая панель */
 .sidebar {
     width: 250px;
     background: #f5f5f5;
@@ -100,12 +110,14 @@ body {
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* Область чата */
+/* Область чата - занимает всю высоту */
 .chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
     background: #e5ddd5;
+    height: 100%;
+    min-height: 0;
 }
 
 .chat-container {
@@ -114,6 +126,7 @@ body {
     height: 100%;
 }
 
+/* Область сообщений - растягивается и скроллится */
 .messages-area {
     flex: 1;
     overflow-y: auto;
@@ -172,13 +185,14 @@ body {
     word-wrap: break-word;
 }
 
-/* Область ввода */
+/* Область ввода - фиксируется внизу */
 .input-area {
     display: flex;
     padding: 15px;
     background: #f0f0f0;
     border-top: 1px solid #ddd;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .chat-input {
@@ -210,31 +224,31 @@ body {
 
 /* Адаптивность */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-  .message {
-    max-width: 85%;
-  }
+    .sidebar {
+        width: 200px;
+    }
+    .message {
+        max-width: 85%;
+    }
 }
 
 @media (max-width: 480px) {
-  .main-container {
-    flex-direction: column;
-  }
-  .sidebar {
-    width: 100%;
-    height: auto;
-    max-height: 150px;
-    overflow-y: auto;
-  }
-  .message {
-    max-width: 90%;
-  }
-  .message-name, .message-text {
-    font-size: 12px;
-  }
-  .chat-input, .send-button {
-    font-size: 12px;
-  }
+    .main-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .message {
+        max-width: 90%;
+    }
+    .message-name, .message-text {
+        font-size: 12px;
+    }
+    .chat-input, .send-button {
+        font-size: 12px;
+    }
 }
