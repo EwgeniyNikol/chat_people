@@ -26,8 +26,13 @@ class App {
       if (result.success) {
         this.currentUser = { id: result.user.id, name: result.user.name };
         modal.close();
+        break;
       } else {
         modal.showError(result.message);
+        if (modal.input) {
+          modal.input.value = '';
+          modal.input.focus();
+        }
       }
     }
     
