@@ -39,7 +39,9 @@ wss.on("connection", (ws) => {
   ws.on("message", (data, isBinary) => {
     try {
       const msg = JSON.parse(data);
-      if (msg.user && !currentUser) currentUser = msg.user;
+      if (msg.user && !currentUser) {
+        currentUser = { id: msg.user.id, name: String(msg.user.name) };
+      }
 
       if (msg.type === "send") {
         wss.clients.forEach(client => {

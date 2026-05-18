@@ -13,6 +13,9 @@ export default class MessageRenderer {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isCurrentUser ? 'message-right' : 'message-left'}`;
     
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
     const nameSpan = document.createElement('div');
     nameSpan.className = 'message-name';
     nameSpan.textContent = isCurrentUser ? 'You' : user.name;
@@ -26,20 +29,21 @@ export default class MessageRenderer {
     textSpan.className = 'message-text';
     textSpan.textContent = message;
     
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
     contentDiv.append(nameSpan, timeSpan, textSpan);
-    
     messageDiv.append(contentDiv);
     this.container.append(messageDiv);
     this.scrollToBottom();
   }
 
   scrollToBottom() {
-    this.container.scrollTop = this.container.scrollHeight;
+    if (this.container) {
+      this.container.scrollTop = this.container.scrollHeight;
+    }
   }
 
   clear() {
-    this.container.innerHTML = '';
+    if (this.container) {
+      this.container.innerHTML = '';
+    }
   }
 }

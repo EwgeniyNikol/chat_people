@@ -18,14 +18,13 @@ class App {
 
   async init() {
     const modal = new Modal();
-    let nickname = null;
     
     while (!this.currentUser) {
-      nickname = await modal.show();
+      const nickname = await modal.show();
       const result = await this.registerUser(nickname);
       
       if (result.success) {
-        this.currentUser = result.user;
+        this.currentUser = { id: result.user.id, name: result.user.name };
         modal.close();
       } else {
         modal.showError(result.message);
@@ -46,7 +45,7 @@ class App {
       
       const data = await response.json();
       
-      if (response.status === 409 || data.status === 'error') {
+      if (response.status === 409) {
         return {
           success: false,
           message: 'Этот никнейм уже занят! Пожалуйста, введите другой.'
@@ -54,21 +53,12 @@ class App {
       }
       
       if (data.status === 'ok') {
-        return {
-          success: true,
-          user: data.user
-        };
+        return { success: true, user: data.user };
       }
       
-      return {
-        success: false,
-        message: 'Ошибка сервера'
-      };
+      return { success: false, message: 'Ошибка сервера' };
     } catch (error) {
-      return {
-        success: false,
-        message: 'Ошибка соединения с сервером'
-      };
+      return { success: false, message: 'Ошибка соединения с сервером' };
     }
   }
 
@@ -77,11 +67,15 @@ class App {
     await this.wsClient.connect();
     
     this.wsClient.onMessage = (data) => {
-      this.messageRenderer.renderMessage(data);
+      if (this.messageRenderer) {
+        this.messageRenderer.renderMessage(data);
+      }
     };
     
     this.wsClient.onUserList = (users) => {
-      this.userList.render(users);
+      if (this.userList) {
+        this.userList.render(users);
+      }
     };
   }
 

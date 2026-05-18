@@ -4,6 +4,8 @@ export default class UserList {
   }
 
   render(users) {
+    if (!this.container) return;
+    
     this.container.innerHTML = '';
     
     const title = document.createElement('h3');
@@ -11,11 +13,21 @@ export default class UserList {
     title.className = 'users-title';
     this.container.append(title);
     
+    if (!users || users.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.textContent = 'Нет участников';
+      emptyMsg.style.cssText = 'color:#999;padding:10px;text-align:center';
+      this.container.append(emptyMsg);
+      return;
+    }
+    
     users.forEach(user => {
-      const userDiv = document.createElement('div');
-      userDiv.className = 'user-item';
-      userDiv.textContent = user.name;
-      this.container.append(userDiv);
+      if (user && typeof user.name === 'string') {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-item';
+        userDiv.textContent = user.name;
+        this.container.append(userDiv);
+      }
     });
   }
 }

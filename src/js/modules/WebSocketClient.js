@@ -40,7 +40,7 @@ export default class WebSocketClient {
     const data = {
       type: 'send',
       message: message,
-      user: user
+      user: { id: user.id, name: user.name }
     };
     this.ws.send(JSON.stringify(data));
   }
@@ -48,7 +48,7 @@ export default class WebSocketClient {
   exit(user) {
     const data = {
       type: 'exit',
-      user: user
+      user: { id: user.id, name: user.name }
     };
     this.ws.send(JSON.stringify(data));
   }
