@@ -6,7 +6,7 @@ module.exports = {
   entry: './src/js/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: 'bundle.[contenthash:8].js',
     clean: true,
   },
   module: {
@@ -45,11 +45,6 @@ module.exports = {
       {
         context: ['/new-user'],
         target: 'http://localhost:3000',
-      },
-      {
-        context: ['/ws'],
-        target: 'ws://localhost:3000',
-        ws: true,
       },
     ],
   },
