@@ -4,36 +4,13 @@ export default class Modal {
     this.input = null;
     this.button = null;
     this.errorDiv = null;
-  }
-
-  show() {
-    return new Promise((resolve) => {
-      this.createModal();
-      this.button.onclick = () => {
-        const nickname = this.input.value.trim();
-        if (nickname) {
-          this.clearError();
-          resolve(nickname);
-        } else {
-          this.showError('Пожалуйста, введите никнейм');
-        }
-      };
-      this.input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.button.click();
-      });
-    });
-  }
-
-  clearError() {
-    if (this.errorDiv) {
-      this.errorDiv.textContent = '';
-      this.errorDiv.style.display = 'none';
-    }
+    this.resolve = null;
+    this.createModal();
   }
 
   createModal() {
     this.modal = document.createElement('div');
-    this.modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000';
+    this.modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:1000';
 
     const container = document.createElement('div');
     container.style.cssText = 'background:white;padding:30px;border-radius:8px;text-align:center;min-width:300px;position:relative';
@@ -51,28 +28,68 @@ export default class Modal {
     this.button.style.cssText = 'padding:8px 20px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer';
 
     this.errorDiv = document.createElement('div');
-    this.errorDiv.style.cssText = 'color:red;font-size:12px;margin-top:10px;display:none;position:relative;z-index:10';
+    this.errorDiv.style.cssText = 'color:red;font-size:12px;margin-top:10px;display:none';
 
     container.append(title, this.input, this.button, this.errorDiv);
     this.modal.append(container);
     document.body.append(this.modal);
-    this.input.focus();
   }
 
-  showError(message) {
+  open() {
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.input.value = '';
+      this.clearError();
+      this.modal.style.display = 'flex';
+      this.input.focus();
+
+      const onClick = () => {
+        const nickname = this.input.value.trim();
+        if (nickname) {
+          this.button.removeEventListener('click', onClick);
+          this.input.removeEventListener('keypress', onEnter);
+          resolve(nickname);
+        } else {
+          this.setError('Пожалуйста, введите никнейм');
+        }
+      };
+
+      const onEnter = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onClick();
+        }
+      };
+
+      this.button.addEventListener('click', onClick);
+      this.input.addEventListener('keypress', onEnter);
+    });
+  }
+
+  setError(message) {
     if (this.errorDiv) {
       this.errorDiv.textContent = message;
       this.errorDiv.style.display = 'block';
       setTimeout(() => {
         if (this.errorDiv) this.errorDiv.style.display = 'none';
       }, 3000);
+    } else {
+      console.error('errorDiv не найден');
+    }
+  }
+
+  clearError() {
+    if (this.errorDiv) {
+      this.errorDiv.textContent = '';
+      this.errorDiv.style.display = 'none';
     }
   }
 
   close() {
     if (this.modal) {
-      this.modal.remove();
-      this.modal = null;
+      this.modal.style.display = 'none';
+      this.clearError();
+      this.resolve = null;
     }
   }
 }
