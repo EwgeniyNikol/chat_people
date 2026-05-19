@@ -5,7 +5,6 @@ export default class Chat {
     this.wsClient = wsClient;
     this.input = null;
     this.sendButton = null;
-    this.onLocalMessage = null;
     this._sending = false;
   }
 
@@ -52,15 +51,7 @@ export default class Chat {
     if (message) {
       this._sending = true;
       this.sendButton.disabled = true;
-      this.sendButton.textContent = '...';
-
-      if (this.onLocalMessage) {
-        this.onLocalMessage({
-          user: { id: this.currentUser.id, name: this.currentUser.name },
-          message: message,
-          timestamp: Date.now()
-        });
-      }
+      this.sendButton.textContent = 'Отправка...';
 
       this.wsClient.sendMessage(message, this.currentUser);
       this.input.value = '';

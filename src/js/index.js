@@ -163,10 +163,6 @@ class App {
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
     this.chat = new Chat('chat-area', this.currentUser, null);
 
-    this.chat.onLocalMessage = (data) => {
-      this.messageRenderer.renderMessage(data);
-    };
-
     this.chat.render();
     this.messageRenderer.container = this.chat.getMessagesContainer();
   }
