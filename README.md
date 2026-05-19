@@ -1,6 +1,6 @@
 # Чат с веб-сокетами
 
-[![Deploy to GitHub Pages](https://github.com/EwgeniyNikol/chat_people/actions/workflows/deploy.yml/badge.svg)](https://github.com/EwgeniyNikol/chat_people/actions/workflows/deploy.yml)
+[![Deploy to GitHub Pages](https://github.com/EwgeniyNikol/chat_people/actions/workflows/deploy.yml/badge.svg)](https://github.com/EwgeniyNikol/chat_people/actions)
 
 ## Ссылки
 
