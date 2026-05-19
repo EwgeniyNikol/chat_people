@@ -20,6 +20,9 @@ app.use((req, res, next) => {
 const userState = [];
 const connectedUsers = new Map();
 const messageTimestamps = new Map();
+const messageHistory = [];
+
+const MAX_HISTORY = 10;
 
 app.post("/new-user", (req, res) => {
   let { name } = req.body;
@@ -99,6 +102,11 @@ wss.on("connection", (ws) => {
           }
         });
 
+        // Отправляем историю новому пользователю
+        messageHistory.forEach(msg => {
+          ws.send(JSON.stringify(msg));
+        });
+
         logger.info(`User ${currentUser.name} connected`);
         return;
       }
@@ -117,16 +125,22 @@ wss.on("connection", (ws) => {
         }
         messageTimestamps.set(currentUser.id, now);
 
-        const fullMessage = JSON.stringify({
+        const fullMessage = {
           type: "send",
           user: { id: currentUser.id, name: currentUser.name },
           message: String(msg.message || "").slice(0, 2000),
           timestamp: now
-        });
+        };
 
+        messageHistory.push(fullMessage);
+        if (messageHistory.length > MAX_HISTORY) {
+          messageHistory.shift();
+        }
+
+        const fullMessageStr = JSON.stringify(fullMessage);
         wss.clients.forEach(client => {
           if (client.readyState === WebSocket.OPEN) {
-            client.send(fullMessage);
+            client.send(fullMessageStr);
           }
         });
         return;
