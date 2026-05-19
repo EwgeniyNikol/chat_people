@@ -9,6 +9,10 @@ export default class Chat {
     this._sending = false;
   }
 
+  setWsClient(wsClient) {
+    this.wsClient = wsClient;
+  }
+
   render() {
     this.container.innerHTML = '';
 
@@ -42,7 +46,7 @@ export default class Chat {
   }
 
   send() {
-    if (this._sending) return;
+    if (this._sending || !this.wsClient) return;
 
     const message = this.input.value.trim();
     if (message) {
