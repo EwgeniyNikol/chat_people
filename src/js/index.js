@@ -14,26 +14,31 @@ class App {
     this.messageRenderer = null;
     this.userList = null;
     this.chat = null;
+    this.modal = null;
   }
 
   async init() {
-    const modal = new Modal();
-
-    while (!this.currentUser) {
-      const nickname = await modal.open();
-      const result = await this.registerUser(nickname);
-
-      if (result.success) {
-        this.currentUser = { id: result.user.id, name: result.user.name };
-        modal.close();
-        break;
-      } else {
-        modal.setError(result.message);
-      }
-    }
-
+    this.modal = new Modal();
+    await this.askNickname();
     await this.initWebSocket();
     this.renderUI();
+  }
+
+  async askNickname() {
+    const nickname = await this.modal.open();
+    const result = await this.registerUser(nickname);
+    
+    if (result.success) {
+      this.currentUser = { id: result.user.id, name: result.user.name };
+      this.modal.close();
+    } else {
+      this.modal.setError(result.message);
+      if (this.modal.input) {
+        this.modal.input.value = '';
+        this.modal.input.focus();
+      }
+      await this.askNickname(); 
+    }
   }
 
   async registerUser(nickname) {
@@ -43,20 +48,20 @@ class App {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nickname })
       });
-
+      
       const data = await response.json();
-
+      
       if (response.status === 409) {
         return {
           success: false,
           message: 'Этот никнейм уже занят! Пожалуйста, введите другой.'
         };
       }
-
+      
       if (data.status === 'ok') {
         return { success: true, user: data.user };
       }
-
+      
       return { success: false, message: 'Ошибка сервера' };
     } catch (error) {
       console.error('Ошибка регистрации:', error);
@@ -67,13 +72,13 @@ class App {
   async initWebSocket() {
     this.wsClient = new WebSocketClient(WS_URL);
     await this.wsClient.connect();
-
+    
     this.wsClient.onMessage = (data) => {
       if (this.messageRenderer) {
         this.messageRenderer.renderMessage(data);
       }
     };
-
+    
     this.wsClient.onUserList = (users) => {
       if (this.userList) {
         this.userList.render(users);
@@ -84,25 +89,25 @@ class App {
   renderUI() {
     const appDiv = document.getElementById('app');
     appDiv.innerHTML = '';
-
+    
     const mainContainer = document.createElement('div');
     mainContainer.className = 'main-container';
-
+    
     const sidebar = document.createElement('div');
     sidebar.className = 'sidebar';
     sidebar.id = 'user-list';
-
+    
     const chatArea = document.createElement('div');
     chatArea.className = 'chat-area';
     chatArea.id = 'chat-area';
-
+    
     mainContainer.append(sidebar, chatArea);
     appDiv.append(mainContainer);
-
+    
     this.userList = new UserList('user-list');
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
     this.chat = new Chat('chat-area', this.currentUser, this.wsClient);
-
+    
     this.chat.render();
     this.messageRenderer.container = this.chat.getMessagesContainer();
   }
