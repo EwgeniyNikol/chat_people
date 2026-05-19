@@ -45,6 +45,15 @@ export default class WebSocketClient {
     });
   }
 
+  authenticate(user) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'auth',
+        user: { id: user.id, name: user.name }
+      }));
+    }
+  }
+
   sendMessage(message, user) {
     const data = {
       type: 'send',

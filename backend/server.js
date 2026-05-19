@@ -59,16 +59,60 @@ wss.on("connection", (ws) => {
     try {
       const msg = JSON.parse(data);
 
+      if (msg.type === "auth" && msg.user) {
+        const { id, name } = msg.user;
+        if (!id || !name) return;
+
+        const registered = userState.find(u => u.id === id && u.name === name);
+        if (!registered) {
+          ws.send(JSON.stringify({ type: "error", message: "Пользователь не зарегистрирован!" }));
+          return;
+        }
+
+        if (connectedUsers.has(id)) {
+          const oldWs = connectedUsers.get(id);
+          if (oldWs.readyState === WebSocket.OPEN) {
+            oldWs.close();
+          }
+          connectedUsers.delete(id);
+          const idx = userState.findIndex(u => u.id === id);
+          if (idx !== -1) userState.splice(idx, 1);
+        }
+
+        currentUser = { id, name: String(name) };
+        connectedUsers.set(id, ws);
+
+        if (!userState.find(u => u.id === id)) {
+          userState.push(currentUser);
+        }
+
+        const joinMsg = JSON.stringify({
+          type: "system",
+          message: `${currentUser.name} присоединился к чату`
+        });
+        const userList = JSON.stringify(userState);
+
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            if (client !== ws) client.send(joinMsg);
+            client.send(userList);
+          }
+        });
+
+        logger.info(`User ${currentUser.name} connected`);
+        return;
+      }
+
       if (msg.type === "send") {
         if (!currentUser) {
-          ws.send(JSON.stringify({ type: "error", message: "You are not registered!" }));
+          ws.send(JSON.stringify({ type: "error", message: "Вы не авторизованы!" }));
           return;
         }
 
         const now = Date.now();
         const last = messageTimestamps.get(currentUser.id) || 0;
         if (now - last < 500) {
-          ws.send(JSON.stringify({ type: "error", message: "Slow down! Message not sent." }));
+          ws.send(JSON.stringify({ type: "error", message: "Слишком быстро! Сообщение не отправлено." }));
           return;
         }
         messageTimestamps.set(currentUser.id, now);
@@ -111,43 +155,9 @@ wss.on("connection", (ws) => {
         currentUser = null;
         return;
       }
-
-      if (msg.user && !currentUser) {
-        const { id, name } = msg.user;
-        if (!id || !name) return;
-
-        const registered = userState.find(u => u.id === id && u.name === name);
-        if (!registered) {
-          ws.send(JSON.stringify({ type: "error", message: "User not registered!" }));
-          return;
-        }
-
-        if (connectedUsers.has(id)) {
-          ws.send(JSON.stringify({ type: "error", message: "This user is already connected!" }));
-          return;
-        }
-
-        currentUser = { id, name: String(name) };
-        connectedUsers.set(id, ws);
-
-        const joinMsg = JSON.stringify({
-          type: "system",
-          message: `${currentUser.name} присоединился к чату`
-        });
-        const userList = JSON.stringify(userState);
-
-        wss.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            if (client !== ws) client.send(joinMsg);
-            client.send(userList);
-          }
-        });
-
-        logger.info(`User ${currentUser.name} connected`);
-      }
     } catch (e) {
       logger.error("Parse error:", e);
-      ws.send(JSON.stringify({ type: "error", message: "Invalid message format" }));
+      ws.send(JSON.stringify({ type: "error", message: "Неверный формат сообщения" }));
     }
   });
 

@@ -105,6 +105,7 @@ class App {
     await this.wsClient.connect();
 
     this.chat.setWsClient(this.wsClient);
+    this.wsClient.authenticate(this.currentUser);
 
     this.wsClient.onMessage = (data) => {
       if (this.messageRenderer) {
