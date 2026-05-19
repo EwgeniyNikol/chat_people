@@ -4,45 +4,70 @@ export default class Modal {
     this.input = null;
     this.button = null;
     this.resolve = null;
+    this._onClick = null;
+    this._onEnter = null;
+    this._onEscape = null;
   }
 
   open() {
     return new Promise((resolve) => {
+      if (this._onClick) {
+        this.button.removeEventListener('click', this._onClick);
+      }
+      if (this._onEnter) {
+        this.input.removeEventListener('keypress', this._onEnter);
+      }
+
       this.resolve = resolve;
       if (!this.modal) {
         this.createModal();
       }
       this.input.value = '';
-      this.clearError();
       this.modal.style.display = 'flex';
       this.input.focus();
 
-      const onClick = () => {
+      this._onClick = () => {
         const nickname = this.input.value.trim();
         if (nickname) {
-          this.button.removeEventListener('click', onClick);
-          this.input.removeEventListener('keypress', onEnter);
+          this.button.removeEventListener('click', this._onClick);
+          this.input.removeEventListener('keypress', this._onEnter);
+          document.removeEventListener('keydown', this._onEscape);
           resolve(nickname);
         } else {
           this.setError('Пожалуйста, введите никнейм');
         }
       };
 
-      const onEnter = (e) => {
+      this._onEnter = (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          onClick();
+          this._onClick();
         }
       };
 
-      this.button.addEventListener('click', onClick);
-      this.input.addEventListener('keypress', onEnter);
+      this._onEscape = (e) => {
+        if (e.key === 'Escape') {
+          this.close();
+          resolve('');
+        }
+      };
+
+      this.button.addEventListener('click', this._onClick);
+      this.input.addEventListener('keypress', this._onEnter);
+      document.addEventListener('keydown', this._onEscape);
     });
   }
 
   createModal() {
     this.modal = document.createElement('div');
     this.modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000';
+
+    this.modal.addEventListener('click', (e) => {
+      if (e.target === this.modal) {
+        this.close();
+        if (this.resolve) this.resolve('');
+      }
+    });
 
     const container = document.createElement('div');
     container.style.cssText = 'background:white;padding:30px;border-radius:8px;text-align:center;min-width:300px;position:relative';
@@ -69,25 +94,19 @@ export default class Modal {
   }
 
   setError(message) {
-    console.log('=== setError вызван ===');
-    console.log('message:', message);
-    console.log('this.modal:', this.modal);
     const errorDiv = this.modal ? this.modal.querySelector('.error-message') : null;
-    console.log('Найден errorDiv:', errorDiv);
     if (errorDiv) {
       errorDiv.textContent = message;
       errorDiv.style.display = 'block';
-      console.log('errorDiv текст установлен, display block');
-      setTimeout(() => {
+      clearTimeout(this._errorTimeout);
+      this._errorTimeout = setTimeout(() => {
         errorDiv.style.display = 'none';
-        console.log('errorDiv скрыт через 3 секунды');
       }, 3000);
-    } else {
-      console.error('errorDiv не найден в DOM!');
     }
   }
 
   clearError() {
+    clearTimeout(this._errorTimeout);
     const errorDiv = this.modal ? this.modal.querySelector('.error-message') : null;
     if (errorDiv) {
       errorDiv.textContent = '';
@@ -99,6 +118,13 @@ export default class Modal {
     if (this.modal) {
       this.modal.style.display = 'none';
       this.clearError();
+      document.removeEventListener('keydown', this._onEscape);
+      if (this._onClick) {
+        this.button.removeEventListener('click', this._onClick);
+      }
+      if (this._onEnter) {
+        this.input.removeEventListener('keypress', this._onEnter);
+      }
       this.resolve = null;
     }
   }

@@ -5,7 +5,13 @@ import WebSocketClient from './modules/WebSocketClient.js';
 import MessageRenderer from './modules/MessageRenderer.js';
 import UserList from './modules/UserList.js';
 
-const WS_URL = 'wss://chat-people-backend-viyo.onrender.com';
+const WS_URL = location.hostname === 'localhost'
+  ? 'ws://localhost:3000'
+  : 'wss://chat-people-backend-viyo.onrender.com';
+
+const API_URL = location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://chat-people-backend-viyo.onrender.com';
 
 class App {
   constructor() {
@@ -19,49 +25,74 @@ class App {
 
   async init() {
     this.modal = new Modal();
-    await this.askNickname();
-    await this.initWebSocket();
+
+    const saved = localStorage.getItem('chat_user');
+    if (saved) {
+      try {
+        const user = JSON.parse(saved);
+        const result = await this.registerUser(user.name);
+        if (result.success) {
+          this.currentUser = { id: result.user.id, name: result.user.name };
+          localStorage.setItem('chat_user', JSON.stringify(this.currentUser));
+        } else {
+          localStorage.removeItem('chat_user');
+        }
+      } catch (e) {
+        localStorage.removeItem('chat_user');
+      }
+    }
+
+    if (!this.currentUser) {
+      await this.askNickname();
+    }
+
     this.renderUI();
+    await this.initWebSocket();
   }
 
   async askNickname() {
-    const nickname = await this.modal.open();
-    const result = await this.registerUser(nickname);
-    
-    if (result.success) {
-      this.currentUser = { id: result.user.id, name: result.user.name };
-      this.modal.close();
-    } else {
-      this.modal.setError(result.message);
-      if (this.modal.input) {
-        this.modal.input.value = '';
-        this.modal.input.focus();
+    while (true) {
+      const nickname = await this.modal.open();
+      if (!nickname) continue;
+
+      const result = await this.registerUser(nickname);
+
+      if (result.success) {
+        this.currentUser = { id: result.user.id, name: result.user.name };
+        localStorage.setItem('chat_user', JSON.stringify(this.currentUser));
+        this.modal.close();
+        return;
+      } else {
+        this.modal.setError(result.message);
+        if (this.modal.input) {
+          this.modal.input.value = '';
+          this.modal.input.focus();
+        }
       }
-      await this.askNickname(); 
     }
   }
 
   async registerUser(nickname) {
     try {
-      const response = await fetch('https://chat-people-backend-viyo.onrender.com/new-user', {
+      const response = await fetch(`${API_URL}/new-user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nickname })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.status === 409) {
         return {
           success: false,
           message: 'Этот никнейм уже занят! Пожалуйста, введите другой.'
         };
       }
-      
+
       if (data.status === 'ok') {
         return { success: true, user: data.user };
       }
-      
+
       return { success: false, message: 'Ошибка сервера' };
     } catch (error) {
       console.error('Ошибка регистрации:', error);
@@ -72,16 +103,28 @@ class App {
   async initWebSocket() {
     this.wsClient = new WebSocketClient(WS_URL);
     await this.wsClient.connect();
-    
+
     this.wsClient.onMessage = (data) => {
       if (this.messageRenderer) {
         this.messageRenderer.renderMessage(data);
       }
     };
-    
+
     this.wsClient.onUserList = (users) => {
       if (this.userList) {
         this.userList.render(users);
+      }
+    };
+
+    this.wsClient.onSystemMessage = (data) => {
+      if (this.messageRenderer) {
+        this.messageRenderer.showSystemMessage(data.message);
+      }
+    };
+
+    this.wsClient.onClose = () => {
+      if (this.messageRenderer) {
+        this.messageRenderer.showSystemMessage('Соединение потеряно. Перезагрузите страницу.');
       }
     };
   }
@@ -89,25 +132,29 @@ class App {
   renderUI() {
     const appDiv = document.getElementById('app');
     appDiv.innerHTML = '';
-    
+
     const mainContainer = document.createElement('div');
     mainContainer.className = 'main-container';
-    
+
     const sidebar = document.createElement('div');
     sidebar.className = 'sidebar';
     sidebar.id = 'user-list';
-    
+
     const chatArea = document.createElement('div');
     chatArea.className = 'chat-area';
     chatArea.id = 'chat-area';
-    
+
     mainContainer.append(sidebar, chatArea);
     appDiv.append(mainContainer);
-    
+
     this.userList = new UserList('user-list');
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
     this.chat = new Chat('chat-area', this.currentUser, this.wsClient);
-    
+
+    this.chat.onLocalMessage = (data) => {
+      this.messageRenderer.renderMessage(data);
+    };
+
     this.chat.render();
     this.messageRenderer.container = this.chat.getMessagesContainer();
   }
@@ -115,12 +162,6 @@ class App {
 
 const app = new App();
 app.init();
-
-window.addEventListener('pagehide', () => {
-  if (app.wsClient && app.currentUser) {
-    app.wsClient.exit(app.currentUser);
-  }
-});
 
 window.addEventListener('beforeunload', () => {
   if (app.wsClient && app.currentUser) {

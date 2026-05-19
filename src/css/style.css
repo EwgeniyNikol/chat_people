@@ -136,11 +136,11 @@ body {
 }
 
 .message-left {
-    justify-content: flex-start;
+    align-self: flex-start;
 }
 
 .message-right {
-    justify-content: flex-end;
+    align-self: flex-end;
 }
 
 .message-content {
@@ -176,6 +176,9 @@ body {
     font-size: 14px;
     color: #333;
     word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow: hidden;
 }
 
 .input-area {

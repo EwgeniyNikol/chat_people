@@ -2,6 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
+  mode: 'development',
   entry: './src/js/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -40,5 +41,16 @@ module.exports = {
     static: './dist',
     port: 8080,
     hot: true,
+    proxy: [
+      {
+        context: ['/new-user'],
+        target: 'http://localhost:3000',
+      },
+      {
+        context: ['/ws'],
+        target: 'ws://localhost:3000',
+        ws: true,
+      },
+    ],
   },
 };
