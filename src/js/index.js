@@ -104,6 +104,8 @@ class App {
     this.wsClient = new WebSocketClient(WS_URL);
     await this.wsClient.connect();
 
+    this.chat.setWsClient(this.wsClient);
+
     this.wsClient.onMessage = (data) => {
       if (this.messageRenderer) {
         this.messageRenderer.renderMessage(data);
@@ -148,8 +150,17 @@ class App {
     appDiv.append(mainContainer);
 
     this.userList = new UserList('user-list');
+    this.userList.onExit = () => {
+      localStorage.removeItem('chat_user');
+      if (this.wsClient) {
+        this.wsClient.exit(this.currentUser);
+        this.wsClient.disconnect();
+      }
+      location.reload();
+    };
+
     this.messageRenderer = new MessageRenderer('chat-area', this.currentUser);
-    this.chat = new Chat('chat-area', this.currentUser, this.wsClient);
+    this.chat = new Chat('chat-area', this.currentUser, null);
 
     this.chat.onLocalMessage = (data) => {
       this.messageRenderer.renderMessage(data);
